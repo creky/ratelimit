@@ -1,4 +1,4 @@
-module ratelimit
+module github.com/creky/ratelimit
 
 go 1.20
 
