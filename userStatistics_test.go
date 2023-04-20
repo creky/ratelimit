@@ -23,6 +23,19 @@ func Test_userStatistics(t *testing.T) {
 	//log.Println(curOnlineUsersVisitsDetail)
 	user := curOnlineUsersVisitsDetail[2][0]
 	remainingVisit := curOnlineUsersVisitsDetail[2][1]
+	r.AllowVisit("ydg")
+	res := r.AllowVisit("ydg")
+	r.ResetRecords()
+	res = r.AllowVisit("ydg")
+	t.Log(res)
+	t.Log(r.RemainingVisit("ydg"))
+	r.Clean()
+	r.AddRule(time.Second*30, 2)
+	r.AllowVisit("ydg")
+	r.AllowVisit("ydg")
+	res = r.AllowVisit("ydg")
+	t.Log(res)
+	t.Log(r.RemainingVisit("ydg"))
 	if user != "ydg" {
 		t.Fatalf("unexpected value obtained; got %q want %q", user, "ydg")
 	}

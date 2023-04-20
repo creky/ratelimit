@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-//用户访问控制策略,可由一个或多个访问控制规则组成
+// 用户访问控制策略,可由一个或多个访问控制规则组成
 type Rule struct {
 	rules []*singleRule
 	//以下用于备份数据，在需要备份时才在作用
@@ -115,9 +115,25 @@ ManualEmptyVisitorRecordsOf("andyyu")
 */
 func (r *Rule) ManualEmptyVisitorRecordsOf(key interface{}) {
 	if len(r.rules) == 0 {
-		panic("rule is empty，please add rule by AddRule")
+		return
 	}
 	for i := range r.rules {
 		r.rules[i].manualEmptyVisitorRecordsOf(key)
 	}
+}
+
+func (r *Rule) ResetRecords() {
+	if len(r.rules) == 0 {
+		return
+	}
+	for i := range r.rules {
+		r.rules[i].ResetRecords()
+	}
+}
+
+func (r *Rule) Clean() {
+	if len(r.rules) == 0 {
+		return
+	}
+	r.rules = []*singleRule{}
 }

@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-//单组用户访问控制策略
+// 单组用户访问控制策略
 type singleRule struct {
 	defaultExpiration            time.Duration               //表示计时周期,每条访问记录需要保存的时长，超过这个时长的数据记录将会被清除
 	numberOfAllowedAccesses      int                         //在计时周期内最多允许访问的次数
@@ -83,7 +83,7 @@ func createsingleRule(defaultExpiration, cleanupInterval time.Duration, numberOf
 	return &vc
 }
 
-//根据用户key返回其数据在visitorRecords中的下标
+// 根据用户key返回其数据在visitorRecords中的下标
 func (s *singleRule) getIndexFrom(key interface{}) int {
 	//大部分情况下是读，只有少部分情况下是写，这里本业务测试中读写锁的的测试性能大概是互斥锁的5倍
 	//只需要用到读锁
@@ -115,7 +115,7 @@ func (s *singleRule) getIndexFrom(key interface{}) int {
 	return index
 }
 
-//经过一段时间无访问数据时，从usedVisitorRecordsIndex中删除用户Key
+// 经过一段时间无访问数据时，从usedVisitorRecordsIndex中删除用户Key
 func (s *singleRule) updateIndexOf(key interface{}) {
 	s.lockerForKeyIndex.Lock()
 	defer s.lockerForKeyIndex.Unlock()
@@ -125,18 +125,18 @@ func (s *singleRule) updateIndexOf(key interface{}) {
 	}
 }
 
-//是否允许访问,允许访问则往访问记录中加入一条访问记录
+// 是否允许访问,允许访问则往访问记录中加入一条访问记录
 func (s *singleRule) allowVisit(key interface{}) bool {
 	return s.add(key) == nil
 }
 
-//剩余访问次数
+// 剩余访问次数
 func (s *singleRule) remainingVisits(key interface{}) int {
 	index := s.getIndexFrom(key)
 	return s.visitorRecords[index].unUsedSize()
 }
 
-//某IP剩余访问次数
+// 某IP剩余访问次数
 func (s *singleRule) remainingVisitsIP(ip string) int {
 	ipInt64 := ip4StringToInt64(ip)
 	if ipInt64 == 0 {
@@ -145,21 +145,21 @@ func (s *singleRule) remainingVisitsIP(ip string) int {
 	return s.remainingVisits(ipInt64)
 }
 
-//增加一条访问记录
+// 增加一条访问记录
 func (s *singleRule) add(key interface{}) (err error) {
 	index := s.getIndexFrom(key)
 	s.visitorRecords[index].deleteExpired(key)
 	return s.visitorRecords[index].pushWithConcurrencysafety(s.defaultExpiration)
 }
 
-//增加一条访问记录,从备份文件中增加,从备份文件中过来的数据不可信，有可能被不小心修改过，需要做校检
+// 增加一条访问记录,从备份文件中增加,从备份文件中过来的数据不可信，有可能被不小心修改过，需要做校检
 func (s *singleRule) addFromBackUpFile(key interface{}, reordFromBackUpFile int64) (err error) {
 	index := s.getIndexFrom(key)
 	s.visitorRecords[index].deleteExpired(key)
 	return s.visitorRecords[index].push(reordFromBackUpFile)
 }
 
-//清除访问记录
+// 清除访问记录
 func (s *singleRule) manualEmptyVisitorRecordsOf(key interface{}) {
 	index := s.getIndexFrom(key)
 	for {
@@ -170,7 +170,7 @@ func (s *singleRule) manualEmptyVisitorRecordsOf(key interface{}) {
 	}
 }
 
-//删除过期数据
+// 删除过期数据
 func (s *singleRule) deleteExpired() {
 	finished := true
 	for range time.Tick(s.cleanupInterval) {
@@ -183,7 +183,7 @@ func (s *singleRule) deleteExpired() {
 	}
 }
 
-//在特定时间间隔内执行一次删除过期数据操作
+// 在特定时间间隔内执行一次删除过期数据操作
 func (s *singleRule) deleteExpiredOnce() {
 	s.usedVisitorRecordsIndex.Range(func(key, indexVal interface{}) bool {
 		index := s.getIndexFrom(key)
@@ -195,4 +195,10 @@ func (s *singleRule) deleteExpiredOnce() {
 		}
 		return true
 	})
+}
+
+func (s *singleRule) ResetRecords() {
+	for idx, _ := range s.visitorRecords {
+		s.visitorRecords[idx].resetRecords()
+	}
 }
