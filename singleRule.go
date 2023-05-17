@@ -198,6 +198,8 @@ func (s *singleRule) deleteExpiredOnce() {
 }
 
 func (s *singleRule) ResetRecords() {
+	s.usedVisitorRecordsIndex = sync.Map{}
+	s.notUsedVisitorRecordsIndex = make(map[int]struct{})
 	for idx, _ := range s.visitorRecords {
 		s.visitorRecords[idx].resetRecords()
 	}
